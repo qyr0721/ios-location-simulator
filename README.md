@@ -3,6 +3,13 @@
 Android 手机通过 OTG 直连 iPhone，**不需要电脑、不需要越狱、不需要在 iPhone 上安装 App**。
 已验证设备：iPhone 17 Pro（`iPhone18,3`，iOS 27.0.1）+ OPPO PKX110（Android 17）。
 
+## 下载
+
+- APK：[dist/IosLocationSimulator-route.apk](dist/IosLocationSimulator-route.apk)
+  （debug 签名，arm64，Android 8.0+）
+
+> 首次安装需允许“安装未知应用”；仅用于开发与测试。
+
 ## 原理
 
 iPhone 的 USB 接口只暴露 usbmux 多路复用协议。桌面上由 Apple usbmuxd 把它翻译成
