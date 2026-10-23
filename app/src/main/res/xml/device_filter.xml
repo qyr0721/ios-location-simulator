@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Apple USB vendor id 0x05AC. Product ids of iOS devices are 0x1290..0x12AF,
+     plus USB-C/iPhone 15 family ids that fall in the same range. A broad filter
+     is fine; the code also verifies the vendor-specific interface at runtime. -->
+<resources>
+    <usb-device vendor-id="1452" />
+</resources>

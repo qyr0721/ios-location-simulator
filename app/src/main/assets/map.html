@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  html, body { margin:0; padding:0; height:100%; }
+  #map { position:absolute; top:0; bottom:0; left:0; right:0; background:#e9e9e9; }
+  #bar { position:absolute; top:8px; left:8px; right:8px; z-index:1000; display:flex; gap:6px; }
+  #q { flex:1; padding:9px 10px; border:1px solid #bbb; border-radius:8px; font-size:14px; }
+  #bar button { padding:9px 14px; border:0; border-radius:8px; background:#1565C0; color:#fff; font-size:14px; }
+  #hint { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); z-index:1000;
+          background:rgba(0,0,0,.62); color:#fff; padding:6px 12px; border-radius:16px;
+          font-size:12px; white-space:nowrap; }
+  /* keep the zoom buttons below the search bar */
+  .leaflet-top.leaflet-left { top: 56px; }
+  .num-icon { background:#1565C0; color:#fff; border-radius:50%; width:24px; height:24px;
+              line-height:24px; text-align:center; font-size:12px; border:2px solid #fff;
+              box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  .current-icon { background:#E53935; border:3px solid #fff; border-radius:50%; width:16px; height:16px;
+                  box-shadow:0 0 0 4px rgba(229,57,53,.3); }
+</style>
+</head>
+<body>
+<div id="bar">
+  <input id="q" placeholder="搜索地点，例如：成都天府广场" />
+  <button onclick="doSearch()">搜索</button>
+</div>
+<div id="map"></div>
+<div id="hint">点击“添加点”后在地图上点选</div>
+<script>
+var map = L.map('map', { zoomControl: true }).setView([30.5728, 104.0668], 12);
+var tileLayer = null;
+var markers = [];
+var polyline = null;
+var currentMarker = null;
+var addMode = false;
+var points = [];
+
+function setTileProvider(url, attribution) {
+  if (tileLayer) { map.removeLayer(tileLayer); tileLayer = null; }
+  tileLayer = L.tileLayer(url, { maxZoom: 19, attribution: attribution || '' });
+  tileLayer.addTo(map);
+}
+
+function setAddMode(on) {
+  addMode = !!on;
+  document.getElementById('hint').innerText = addMode
+    ? '点击地图添加路线点'
+    : '平移 / 缩放地图';
+  map.getContainer().style.cursor = addMode ? 'crosshair' : '';
+}
+
+function setPoints(json) {
+  try { points = JSON.parse(json || '[]'); } catch (e) { points = []; }
+  markers.forEach(function (m) { map.removeLayer(m); });
+  markers = [];
+  if (polyline) { map.removeLayer(polyline); polyline = null; }
+
+  points.forEach(function (p, i) {
+    var icon = L.divIcon({
+      className: '',
+      html: '<div class="num-icon">' + (i + 1) + '</div>',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+    var m = L.marker([p[0], p[1]], { icon: icon }).addTo(map);
+    m.on('click', function (e) {
+      L.DomEvent.stopPropagation(e);
+      Android.onMarkerClick(i);
+    });
+    markers.push(m);
+  });
+
+  if (points.length >= 2) {
+    polyline = L.polyline(points, { color: '#1565C0', weight: 4, opacity: 0.82 }).addTo(map);
+  }
+  if (points.length >= 2) {
+    map.fitBounds(L.latLngBounds(points).pad(0.18), { maxZoom: 16 });
+  } else if (points.length === 1) {
+    map.setView(points[0], 16);
+  }
+}
+
+function setCurrent(lat, lon, fit) {
+  if (currentMarker) {
+    currentMarker.setLatLng([lat, lon]);
+  } else {
+    var icon = L.divIcon({
+      className: '',
+      html: '<div class="current-icon"></div>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+    currentMarker = L.marker([lat, lon], { icon: icon, zIndexOffset: 1000 }).addTo(map);
+  }
+  if (fit) map.setView([lat, lon], Math.max(map.getZoom(), 15));
+}
+
+function clearCurrent() {
+  if (currentMarker) { map.removeLayer(currentMarker); currentMarker = null; }
+}
+
+function setCenter(lat, lon, zoom) {
+  map.setView([lat, lon], zoom || 15);
+}
+
+function fitRoute() {
+  if (points.length >= 2) map.fitBounds(L.latLngBounds(points).pad(0.18));
+  else if (points.length === 1) map.setView(points[0], 16);
+}
+
+function doSearch() {
+  var q = document.getElementById('q').value.trim();
+  if (!q) return;
+  fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' +
+        encodeURIComponent(q), { headers: { 'Accept-Language': 'zh-CN' } })
+    .then(function (r) { return r.json(); })
+    .then(function (j) {
+      if (!j.length) { alert('未找到该地点'); return; }
+      var lat = parseFloat(j[0].lat), lon = parseFloat(j[0].lon);
+      map.setView([lat, lon], 16);
+      if (addMode) Android.onMapClick(lat, lon);
+    })
+    .catch(function () { alert('搜索失败，请检查网络'); });
+}
+
+map.on('click', function (e) {
+  if (addMode) Android.onMapClick(e.latlng.lat, e.latlng.lng);
+});
+
+setTimeout(function () { Android.onMapReady(); }, 250);
+</script>
+</body>
+</html>
