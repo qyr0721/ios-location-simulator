@@ -16,3 +16,4 @@ app/build/
 **/build/
 go/locsim/locsim
 go/locsim/locsim.exe
+!dist/IosLocationSimulator-route.apk
