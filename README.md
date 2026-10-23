@@ -1,7 +1,7 @@
 # iOS 定位模拟器（Android OTG 独立版）
 
 Android 手机通过 OTG 直连 iPhone，**不需要电脑、不需要越狱、不需要在 iPhone 上安装 App**。
-已验证设备：iPhone 17 Pro（`iPhone18,3`，iOS 27.0.1）+ OPPO PKX110（Android 17）。
+已验证设备：iPhone 17（`iPhone18,3`，iOS 27.0.1）+ OPPO PKX110（Android 17）。
 
 ## 下载
 
